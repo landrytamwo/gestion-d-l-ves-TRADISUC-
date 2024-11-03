@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Élèves</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid black; }
+        th, td { padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+
+<h1>Gestion des Élèves</h1>
+
+<form id="eleveForm">
+    <input type="text" id="nom" placeholder="Nom" required>
+    <input type="text" id="classe" placeholder="Classe" required>
+    <input type="text" id="numero_telephone" placeholder="Numéro de Téléphone" required>
+    <input type="date" id="date_debut" required>
+    <button type="submit">Enregistrer Élève</button>
+</form>
+
+<h2>Recherche par Classe</h2>
+<input type="text" id="searchClass" placeholder="Entrer la Classe" onkeyup="rechercherEleves()">
+<button onclick="rechercherEleves()">Rechercher</button>
+
+<h2>Liste des Élèves</h2>
+<table id="eleveTable">
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Classe</th>
+            <th>Numéro de Téléphone</th>
+            <th>Date de Début</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<script>
+    let eleves = JSON.parse(localStorage.getItem('eleves')) || [];
+
+    document.getElementById('eleveForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (document.getElementById('nom').dataset.index) {
+            modifierEleve();
+        } else {
+            ajouterEleve();
+        }
+    });
+
+    function ajouterEleve() {
+        const nom = document.getElementById('nom').value;
+        const classe = document.getElementById('classe').value;
+        const numero_telephone = document.getElementById('numero_telephone').value;
+        const date_debut = document.getElementById('date_debut').value;
+
+        const eleve = { nom, classe, numero_telephone, date_debut };
+        eleves.push(eleve);
+        localStorage.setItem('eleves', JSON.stringify(eleves));
+        afficherEleves();
+        document.getElementById('eleveForm').reset();
+    }
+
+    function afficherEleves() {
+        const tableBody = document.getElementById('eleveTable').getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = '';
+
+        eleves.forEach((eleve, index) => {
+            const row = tableBody.insertRow();
+            row.insertCell(0).textContent = eleve.nom;
+            row.insertCell(1).textContent = eleve.classe;
+            row.insertCell(2).textContent = eleve.numero_telephone;
+            row.insertCell(3).textContent = eleve.date_debut;
+            const actionsCell = row.insertCell(4);
+            actionsCell.innerHTML = `
+                <button onclick="preparerModification(${index})">Modifier</button>
+                <button onclick="supprimerEleve(${index})">Supprimer</button>
+            `;
+        });
+    }
+
+    function supprimerEleve(index) {
+        eleves.splice(index, 1);
+        localStorage.setItem('eleves', JSON.stringify(eleves));
+        afficherEleves();
+    }
+
+    function preparerModification(index) {
+        const eleve = eleves[index];
+        document.getElementById('nom').value = eleve.nom;
+        document.getElementById('classe').value = eleve.classe;
+        document.getElementById('numero_telephone').value = eleve.numero_telephone;
+        document.getElementById('date_debut').value = eleve.date_debut;
+        document.getElementById('nom').dataset.index = index; // Stocker l'index pour la modification
+    }
+
+    function modifierEleve() {
+        const index = document.getElementById('nom').dataset.index;
+        const nom = document.getElementById('nom').value;
+        const classe = document.getElementById('classe').value;
+        const numero_telephone = document.getElementById('numero_telephone').value;
+        const date_debut = document.getElementById('date_debut').value;
+
+        eleves[index] = { nom, classe, numero_telephone, date_debut };
+        localStorage.setItem('eleves', JSON.stringify(eleves));
+        afficherEleves();
+        document.getElementById('eleveForm').reset();
+        delete document.getElementById('nom').dataset.index; // Réinitialiser l'index
+    }
+
+    function rechercherEleves() {
+        const classe = document.getElementById('searchClass').value;
+        const tableBody = document.getElementById('eleveTable').getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = '';
+
+        eleves.forEach((eleve, index) => {
+            if (eleve.classe.includes(classe)) {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = eleve.nom;
+                row.insertCell(1).textContent = eleve.classe;
+                row.insertCell(2).textContent = eleve.numero_telephone;
+                row.insertCell(3).textContent = eleve.date_debut;
+                const actionsCell = row.insertCell(4);
+                actionsCell.innerHTML = `
+                    <button onclick="preparerModification(${index})">Modifier</button>
+                    <button onclick="supprimerEleve(${index})">Supprimer</button>
+                `;
+            }
+        });
+    }
+
+    // Afficher les élèves au chargement de la page
+    window.onload = afficherEleves;
+</script>
+
+</body>
+</html>
